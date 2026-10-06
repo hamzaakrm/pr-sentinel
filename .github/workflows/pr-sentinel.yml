@@ -26,7 +26,7 @@ jobs:
       # In another repo, replace `./` with `hamzaakrm/pr-sentinel@v1` (your published action).
       - uses: ./
         with:
-          provider: anthropic          # or: openai / ollama / fake
+          provider: fake          # or: openai / ollama / fake
           min-severity: low
           fail-on: critical
         env:
