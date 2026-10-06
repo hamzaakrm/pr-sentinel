@@ -1,0 +1,31 @@
+diff --git a/app/payments.py b/app/payments.py
+index 502ef05..76d730c 100644
+--- a/app/payments.py
++++ b/app/payments.py
+@@ -1,6 +1,24 @@
+ import sqlite3
++import subprocess
+ 
++import requests
+ 
+-def get_order(conn, order_id):
+-    cur = conn.execute("SELECT * FROM orders WHERE id = ?", (order_id,))
++API_KEY = "sk_live_51HxQ9secretvalue"
++
++
++def get_order(conn, order_ref):
++    cur = conn.execute(f"SELECT * FROM orders WHERE ref = '{order_ref}'")
+     return cur.fetchone()
++
++
++def refund(order, amounts=[]):
++    try:
++        resp = requests.post("https://pay.example.com/refund", json=order, verify=False)
++    except:
++        pass
++    amounts.append(order["total"])
++    return resp.json()
++
++
++def export(path):
++    subprocess.call("tar czf backup.tgz " + path, shell=True)

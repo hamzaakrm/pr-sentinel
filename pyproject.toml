@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pr-sentinel"
+version = "0.1.0"
+description = "LLM-assisted pull request reviewer that combines static analysis with a pluggable LLM backend."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Hamza Akram" }]
+dependencies = [
+  "httpx>=0.27",
+  "pydantic>=2.5",
+  "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+static = ["ruff>=0.5", "bandit>=1.7"]
+dev = ["pytest>=8", "ruff>=0.5", "bandit>=1.7"]
+
+[project.scripts]
+pr-sentinel = "pr_sentinel.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B", "I", "UP", "SIM", "RUF"]
+ignore = ["RUF001", "RUF022"]

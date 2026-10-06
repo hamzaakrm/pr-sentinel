@@ -1,0 +1,42 @@
+name: "PR Sentinel"
+description: "LLM-assisted pull request review: static analysis + Claude / OpenAI / Ollama, posted as inline comments."
+author: "Hamza Akram"
+branding:
+  icon: "shield"
+  color: "blue"
+
+inputs:
+  provider:
+    description: "anthropic | openai | ollama | fake"
+    default: "anthropic"
+  model:
+    description: "Model name (defaults to the provider's default)"
+    default: ""
+  min-severity:
+    description: "Lowest severity to report: info | low | medium | high | critical"
+    default: "low"
+  fail-on:
+    description: "Fail the check if a finding is at or above this severity (empty = never fail)"
+    default: ""
+  github-token:
+    description: "Token used to read the PR and post the review"
+    default: ${{ github.token }}
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+    - name: Install PR Sentinel
+      shell: bash
+      run: pip install --quiet "${{ github.action_path }}[static]"
+    - name: Run review
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        PR_SENTINEL_PROVIDER: ${{ inputs.provider }}
+        PR_SENTINEL_MODEL: ${{ inputs.model }}
+        PR_SENTINEL_MIN_SEVERITY: ${{ inputs.min-severity }}
+        PR_SENTINEL_FAIL_ON: ${{ inputs.fail-on }}
+      run: pr-sentinel github

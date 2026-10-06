@@ -1,0 +1,13 @@
+# PR Sentinel configuration (all keys optional)
+provider: anthropic
+# model: claude-sonnet-4-5
+min_severity: low
+max_comments: 30
+max_files: 25
+static_analysis: true
+focus: [bugs, security, performance, maintainability]
+ignore:
+  - "tests/fixtures/*"
+  - "examples/*"
+extra_instructions: |
+  This is a Python 3.10+ codebase. Flag missing type hints only on public functions.

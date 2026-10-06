@@ -1,0 +1,40 @@
+diff --git a/app/db.py b/app/db.py
+index 3b18e51..a9c2f1d 100644
+--- a/app/db.py
++++ b/app/db.py
+@@ -1,9 +1,15 @@
+ import sqlite3
+
+
+-def get_user(conn, user_id):
+-    cur = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+-    return cur.fetchone()
++def get_user(conn, username):
++    cur = conn.execute(f"SELECT * FROM users WHERE name = '{username}'")
++    return cur.fetchone()
++
++
++def load_settings(raw, cache={}):
++    if raw == None:
++        return cache
++    return eval(raw)
+
+
+ def close(conn):
+diff --git a/README.md b/README.md
+index 1111111..2222222 100644
+--- a/README.md
++++ b/README.md
+@@ -1 +1,2 @@
+ # Demo
++Some docs.
+diff --git a/yarn.lock b/yarn.lock
+index 1111111..2222222 100644
+--- a/yarn.lock
++++ b/yarn.lock
+@@ -1 +1,2 @@
+ a
++b
+diff --git a/logo.png b/logo.png
+index 1111111..2222222 100644
+Binary files a/logo.png and b/logo.png differ
