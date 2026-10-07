@@ -84,3 +84,19 @@ class OllamaProvider(LLMProvider):
                                {"role": "user", "content": user}]},
         )
         return (data.get("message") or {}).get("content", "")
+
+
+class GeminiProvider(OpenAIProvider):
+    """Google Gemini via its OpenAI-compatible endpoint (has a free tier)."""
+
+    name = "gemini"
+    default_model = "gemini-flash-latest"
+
+    def __init__(self, *a, api_key: str | None = None, base_url: str | None = None, **kw):
+        super().__init__(
+            *a,
+            api_key=api_key or _require_env("GEMINI_API_KEY", "gemini"),
+            base_url=base_url or os.environ.get("GEMINI_BASE_URL")
+            or "https://generativelanguage.googleapis.com/v1beta/openai",
+            **kw,
+        )

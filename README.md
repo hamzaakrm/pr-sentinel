@@ -1,6 +1,6 @@
 # 🛡️ PR Sentinel
 
-**LLM-assisted pull request reviewer.** PR Sentinel combines deterministic static analysis (ruff and bandit) with a pluggable LLM (Claude, OpenAI or a local Ollama model) and posts the review as inline comments on GitHub pull requests. It runs as a **GitHub Action** or as a **CLI** on any local git diff.
+**LLM-assisted pull request reviewer.** PR Sentinel combines deterministic static analysis (ruff and bandit) with a pluggable LLM (Claude, OpenAI, Gemini or a local Ollama model) and posts the review as inline comments on GitHub pull requests. It runs as a **GitHub Action** or as a **CLI** on any local git diff.
 
 ![CI](https://github.com/hamzaakrm/pr-sentinel/actions/workflows/ci.yml/badge.svg)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
@@ -39,7 +39,7 @@ flowchart LR
     C --> D[Static analysis<br/>ruff + bandit<br/>added lines only]
     C --> E[Chunker<br/>token budget]
     D -->|context: don't repeat| F
-    E --> F[LLM provider<br/>Anthropic · OpenAI · Ollama]
+    E --> F[LLM provider<br/>Anthropic · OpenAI · Gemini · Ollama]
     F --> G[JSON parser<br/>tolerant of fences & prose]
     G --> H[Anchor validator<br/>drop / snap bad lines]
     D --> I[Merge, dedupe, rank<br/>min severity, max comments]
@@ -55,7 +55,7 @@ src/pr_sentinel/
 ├── static_analysis.py  # ruff + bandit, filtered to added lines, deduped
 ├── prompt.py           # system/user prompts, chunking, robust JSON extraction
 ├── review.py           # ReviewEngine: orchestrates the pipeline
-├── providers/          # LLMProvider ABC + Anthropic, OpenAI, Ollama, offline fake
+├── providers/          # LLMProvider ABC + Anthropic, OpenAI, Gemini, Ollama, offline fake
 ├── github.py           # Actions event → PR, review API with per-comment fallback
 ├── render.py           # text / markdown / json output
 ├── config.py           # .pr-sentinel.yml + env overrides
@@ -115,7 +115,7 @@ The action posts one review per push. It contains a summary table plus inline co
 Create `.pr-sentinel.yml` in the repo root. Every key is optional:
 
 ```yaml
-provider: anthropic        # anthropic | openai | ollama | fake
+provider: gemini           # anthropic | openai | gemini | ollama | fake
 model: claude-sonnet-4-5
 min_severity: low          # info | low | medium | high | critical
 max_comments: 30
@@ -130,7 +130,7 @@ fail_on: critical
 
 | Env var | Purpose |
 |---|---|
-| `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` | Provider credentials |
+| `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `GEMINI_API_KEY` | Provider credentials |
 | `OPENAI_BASE_URL` | Any OpenAI-compatible endpoint (Azure, Groq, LM Studio, ...) |
 | `OLLAMA_HOST` | Ollama server (default `http://localhost:11434`) |
 | `PR_SENTINEL_PROVIDER`, `PR_SENTINEL_MODEL`, `PR_SENTINEL_MIN_SEVERITY`, `PR_SENTINEL_FAIL_ON` | Override config |
@@ -157,7 +157,7 @@ Then register it in `providers/__init__.py`.
 
 ```bash
 pip install -e ".[dev]"
-pytest -q          # 29 tests, no network: HTTP is mocked with httpx.MockTransport
+pytest -q          # 30 tests, no network: HTTP is mocked with httpx.MockTransport
 ruff check src tests
 ```
 

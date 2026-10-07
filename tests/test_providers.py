@@ -77,3 +77,22 @@ def test_missing_api_key(monkeypatch):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     with pytest.raises(ProviderError, match="ANTHROPIC_API_KEY"):
         AnthropicProvider()
+
+
+def test_gemini_uses_openai_compatible_endpoint(monkeypatch):
+    from pr_sentinel.providers import get_provider
+
+    monkeypatch.setenv("GEMINI_API_KEY", "g-key")
+    seen = {}
+
+    def handler(req):
+        seen["url"] = str(req.url)
+        seen["auth"] = req.headers["authorization"]
+        seen["body"] = json.loads(req.content)
+        return httpx.Response(200, json={"choices": [{"message": {"content": "{}"}}]})
+
+    p = get_provider("gemini", client=client(handler))
+    assert p.complete("s", "u") == "{}"
+    assert seen["url"] == "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
+    assert seen["auth"] == "Bearer g-key"
+    assert seen["body"]["model"] == "gemini-flash-latest"

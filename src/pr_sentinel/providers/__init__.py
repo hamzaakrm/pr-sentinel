@@ -4,12 +4,13 @@ from __future__ import annotations
 
 from .base import LLMProvider, ProviderError
 from .fake import FakeProvider
-from .remote import AnthropicProvider, OllamaProvider, OpenAIProvider
+from .remote import AnthropicProvider, GeminiProvider, OllamaProvider, OpenAIProvider
 
 REGISTRY: dict[str, type[LLMProvider]] = {
     "anthropic": AnthropicProvider,
     "claude": AnthropicProvider,
     "openai": OpenAIProvider,
+    "gemini": GeminiProvider,
     "ollama": OllamaProvider,
     "fake": FakeProvider,
 }

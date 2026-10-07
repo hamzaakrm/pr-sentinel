@@ -1,6 +1,6 @@
 # PR Sentinel configuration (all keys optional)
-provider: anthropic
-# model: claude-sonnet-4-5
+provider: gemini   # anthropic | openai | gemini | ollama | fake
+# model: gemini-flash-latest
 min_severity: low
 max_comments: 30
 max_files: 25

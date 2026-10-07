@@ -1,5 +1,5 @@
 name: "PR Sentinel"
-description: "LLM-assisted pull request review: static analysis + Claude / OpenAI / Ollama, posted as inline comments."
+description: "LLM-assisted pull request review: static analysis + Claude / OpenAI / Gemini / Ollama, posted as inline comments."
 author: "Hamza Akram"
 branding:
   icon: "shield"
@@ -7,7 +7,7 @@ branding:
 
 inputs:
   provider:
-    description: "anthropic | openai | ollama | fake"
+    description: "anthropic | openai | gemini | ollama | fake"
     default: "anthropic"
   model:
     description: "Model name (defaults to the provider's default)"
