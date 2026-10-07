@@ -79,7 +79,7 @@ def test_chunking_splits_large_diffs(sample_diff):
     assert len(p.prompts) == 2
 
 
-def test_provider_failure_does_not_crash(sample_diff):
+def test_unparseable_reply_does_not_crash(sample_diff):
     result = ReviewEngine(ScriptedProvider("I cannot help with that"), cfg()).review_diff(sample_diff)
     assert result.findings == []
 
@@ -131,3 +131,18 @@ def test_static_dedupe_merges_ruff_and_bandit(tmp_path):
     found = analyze(parse_diff(diff), tmp_path)
     tls = [f for f in found if f.rule in ("S501", "B501")]
     assert len(tls) == 1 and tls[0].line == 5
+
+
+def test_llm_failure_is_reported_not_hidden(sample_diff):
+    from pr_sentinel.providers import ProviderError
+
+    class Broken(ScriptedProvider):
+        def complete(self, system, user):
+            raise ProviderError("gemini: HTTP 404: model not found")
+
+    result = ReviewEngine(Broken(""), cfg()).review_diff(sample_diff)
+    assert result.errors and "404" in result.errors[0]
+    assert "failed" in result.summary
+    from pr_sentinel.render import summary_markdown
+
+    assert "404" in summary_markdown(result)

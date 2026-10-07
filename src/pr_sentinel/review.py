@@ -50,7 +50,7 @@ class ReviewEngine:
                 return chunk, *parse_findings(self.provider.complete(system, user))
             except (ProviderError, ValueError) as e:
                 log.warning("chunk failed: %s", e)
-                return chunk, "", [], 0
+                return chunk, "", [], str(e)
 
         with ThreadPoolExecutor(max_workers=min(4, len(chunks))) as pool:
             outputs = list(pool.map(run, chunks))
@@ -58,6 +58,9 @@ class ReviewEngine:
         llm_findings: list[Finding] = []
         summaries = []
         for chunk, summary, found, bad in outputs:
+            if isinstance(bad, str):  # the LLM call for this chunk failed
+                result.errors.append(bad[:500])
+                continue
             if summary:
                 summaries.append(summary)
             valid, dropped = self._anchor(found, chunk)
@@ -65,7 +68,10 @@ class ReviewEngine:
             result.dropped += dropped + bad
 
         result.findings = self._merge(static, llm_findings)
-        result.summary = " ".join(summaries) or "Review complete."
+        if result.errors and not summaries:
+            result.summary = "⚠️ The AI review failed, so only static-analysis results are shown."
+        else:
+            result.summary = " ".join(summaries) or "Review complete."
         return result
 
     @staticmethod

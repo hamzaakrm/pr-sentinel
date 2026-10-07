@@ -29,6 +29,8 @@ def to_text(result: ReviewResult, color: bool | None = None) -> str:
             lines.append(c(_DIM, "           suggestion:"))
             lines += [c("\033[32m", f"             {ln}") for ln in f.suggestion.splitlines()]
         lines.append("")
+    for e in result.errors:
+        lines.append(c(_COLORS["high"], "AI review error: ") + e)
     lines.append(c(_BOLD, "Summary: ") + result.summary)
     return "\n".join(lines)
 
@@ -47,6 +49,10 @@ def summary_markdown(result: ReviewResult, not_inlined: list[Finding] | None = N
             src = f"{f.source}:{f.rule}" if f.rule else f.source
             title = f.title.replace("|", "\\|")
             md.append(f"| {f.severity.icon} {f.severity.value} | `{f.file}:{f.line}` | {title} | {src} |")
+    if result.errors:
+        md += ["", "<details><summary>⚠️ AI review errors</summary>", ""]
+        md += [f"- `{e}`" for e in result.errors]
+        md.append("</details>")
     if not_inlined:
         md += ["", "<details><summary>Comments that could not be placed inline</summary>", ""]
         for f in not_inlined:
