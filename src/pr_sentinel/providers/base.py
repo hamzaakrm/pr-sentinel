@@ -26,7 +26,7 @@ class LLMProvider(ABC):
     def complete(self, system: str, user: str) -> str:
         """Return the raw text of the model's reply."""
 
-    def _post(self, url: str, *, headers: dict, json: dict, retries: int = 3) -> dict:
+    def _post(self, url: str, *, headers: dict, json: dict, retries: int = 4) -> dict:
         """POST with exponential backoff on rate limits and transient server errors."""
         delay = 2.0
         for attempt in range(retries + 1):
@@ -40,7 +40,7 @@ class LLMProvider(ABC):
                 continue
             if resp.status_code in (429, 500, 502, 503, 504, 529) and attempt < retries:
                 retry_after = resp.headers.get("retry-after")
-                time.sleep(float(retry_after) if retry_after and retry_after.isdigit() else delay)
+                time.sleep(min(float(retry_after), 60) if retry_after and retry_after.isdigit() else delay)
                 delay *= 2
                 continue
             if resp.status_code >= 400:

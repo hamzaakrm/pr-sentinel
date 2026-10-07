@@ -48,10 +48,13 @@ class OpenAIProvider(LLMProvider):
                          or "https://api.openai.com/v1").rstrip("/")
 
     def complete(self, system: str, user: str) -> str:
+        return self._chat(self.model, system, user)
+
+    def _chat(self, model: str, system: str, user: str) -> str:
         data = self._post(
             f"{self.base_url}/chat/completions",
             headers={"Authorization": f"Bearer {self.api_key}"},
-            json={"model": self.model, "temperature": self.temperature,
+            json={"model": model, "temperature": self.temperature,
                   "response_format": {"type": "json_object"},
                   "messages": [{"role": "system", "content": system},
                                {"role": "user", "content": user}]},
@@ -87,10 +90,15 @@ class OllamaProvider(LLMProvider):
 
 
 class GeminiProvider(OpenAIProvider):
-    """Google Gemini via its OpenAI-compatible endpoint (has a free tier)."""
+    """Google Gemini via its OpenAI-compatible endpoint (has a free tier).
+
+    Free-tier models are sometimes overloaded (HTTP 503) or rate-limited (429), so if the
+    main model keeps failing we fall back to lighter models before giving up.
+    """
 
     name = "gemini"
     default_model = "gemini-flash-latest"
+    fallback_models = ("gemini-flash-lite-latest",)
 
     def __init__(self, *a, api_key: str | None = None, base_url: str | None = None, **kw):
         super().__init__(
@@ -100,3 +108,18 @@ class GeminiProvider(OpenAIProvider):
             or "https://generativelanguage.googleapis.com/v1beta/openai",
             **kw,
         )
+        extra = os.environ.get("GEMINI_FALLBACK_MODELS")
+        if extra is not None:
+            self.fallback_models = tuple(m.strip() for m in extra.split(",") if m.strip())
+
+    def complete(self, system: str, user: str) -> str:
+        models = [self.model, *(m for m in self.fallback_models if m != self.model)]
+        last: ProviderError | None = None
+        for model in models:
+            try:
+                return self._chat(model, system, user)
+            except ProviderError as e:
+                last = e
+                if not any(f"HTTP {c}" in str(e) for c in (429, 500, 503, 529, 404)):
+                    raise  # e.g. bad API key: trying another model won't help
+        raise last  # type: ignore[misc]

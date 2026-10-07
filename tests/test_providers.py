@@ -96,3 +96,40 @@ def test_gemini_uses_openai_compatible_endpoint(monkeypatch):
     assert seen["url"] == "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
     assert seen["auth"] == "Bearer g-key"
     assert seen["body"]["model"] == "gemini-flash-latest"
+
+
+def test_gemini_falls_back_when_overloaded(monkeypatch):
+    from pr_sentinel.providers import get_provider
+
+    monkeypatch.setattr("time.sleep", lambda s: None)
+    monkeypatch.setenv("GEMINI_API_KEY", "g-key")
+    monkeypatch.delenv("GEMINI_FALLBACK_MODELS", raising=False)
+    models = []
+
+    def handler(req):
+        model = json.loads(req.content)["model"]
+        models.append(model)
+        if model == "gemini-flash-latest":
+            return httpx.Response(503, json={"error": {"message": "high demand"}})
+        return httpx.Response(200, json={"choices": [{"message": {"content": "ok"}}]})
+
+    p = get_provider("gemini", client=client(handler))
+    assert p.complete("s", "u") == "ok"
+    assert models[-1] == "gemini-flash-lite-latest"
+    assert models.count("gemini-flash-latest") == 5  # first try + 4 retries
+
+
+def test_gemini_bad_key_does_not_fall_back(monkeypatch):
+    from pr_sentinel.providers import get_provider
+
+    monkeypatch.setenv("GEMINI_API_KEY", "bad")
+    calls = []
+
+    def handler(req):
+        calls.append(1)
+        return httpx.Response(401, text="API key not valid")
+
+    p = get_provider("gemini", client=client(handler))
+    with pytest.raises(ProviderError, match="401"):
+        p.complete("s", "u")
+    assert len(calls) == 1
