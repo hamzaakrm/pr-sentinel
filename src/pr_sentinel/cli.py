@@ -57,6 +57,8 @@ def _engine(args) -> ReviewEngine:
 
 
 def _exit_code(engine: ReviewEngine, result: ReviewResult) -> int:
+    if result.errors:
+        return 2  # make a broken AI review visible as a failed check
     fail_on, worst = engine.config.fail_on, result.max_severity()
     return 1 if fail_on and worst and worst.rank >= fail_on.rank else 0
 

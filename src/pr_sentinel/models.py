@@ -92,6 +92,7 @@ class ReviewResult(BaseModel):
     files_reviewed: int = 0
     provider: str = ""
     dropped: int = 0  # findings rejected because they didn't map to a changed line
+    errors: list[str] = Field(default_factory=list)  # LLM calls that failed
 
     def counts(self) -> dict[str, int]:
         out = {s.value: 0 for s in Severity}
